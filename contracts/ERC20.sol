@@ -34,7 +34,6 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata {
 	mapping(address => uint256) private _balances;
 
 	uint256 private _totalSupply = 1000;
-
 	string private _name = "NoName";
 	string private _symbol = "NONAME";
 
