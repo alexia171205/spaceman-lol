@@ -60,7 +60,7 @@ describe('TokenContract', () => {
     );
   });
 
-  it('it only allows the owner to transferOwnership', async () => {
+  it('it reverts the transaction if an account other than the owner tries to transferOwnership', async () => {
     const sut = await makeSut();
 
     await expectRevert(
