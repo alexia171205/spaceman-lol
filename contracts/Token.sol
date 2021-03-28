@@ -28,11 +28,6 @@ contract Token is Ownable, TokeMetaData {
 	 */
 	mapping(address => uint256) private _reflectionBalance;
 
-	/**
-	 *@dev Maximum number in uint256.
-	 */
-	uint256 private constant MAX_INT_TYPE = type(uint256).max;
-
 	address private _contractAddress;
 
 	constructor() {
