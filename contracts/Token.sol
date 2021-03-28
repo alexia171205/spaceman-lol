@@ -88,7 +88,7 @@ contract Token is Ownable, TokeMetaData {
 	}
 
 	function _reflectFee(uint256 tokenFee) private {
-		_reflectionSupply -= _tokenFromReflection(tokenFee);
+		_reflectionSupply -= _reflectionFromToken(tokenFee);
 		_totalTokenFees += tokenFee;
 	}
 
@@ -102,7 +102,7 @@ contract Token is Ownable, TokeMetaData {
 	{
 		uint256 tax = _calculateTaxFee(amount);
 		uint256 finalAmount = amount - tax;
-		return (taxFee, finalAmount);
+		return (tax, finalAmount);
 	}
 
 	/**
