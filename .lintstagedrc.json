@@ -1,0 +1,3 @@
+{
+  "*.+(json|css|md)": ["yarn lint", "yarn prettier:sol", "yarn prettier:js"]
+}
