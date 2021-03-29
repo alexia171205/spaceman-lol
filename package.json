@@ -10,7 +10,7 @@
   "scripts": {
     "test": "jest --forceExit",
     "prettier:sol": "prettier --write 'contracts/**/*.sol'",
-    "postinstall": "husky install",
+    "prepare": "husky install",
     "lint": "eslint . --ext js",
     "prettier:js": "prettier --write **/*.js"
   },
