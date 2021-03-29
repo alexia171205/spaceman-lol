@@ -12,7 +12,8 @@
     "prettier:sol": "prettier --write 'contracts/**/*.sol'",
     "prepare": "husky install",
     "lint": "eslint . --ext js",
-    "prettier:js": "prettier --write **/*.js"
+    "prettier:js": "prettier --write **/*.js",
+    "build": "npx truffle compile"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.0.1",
