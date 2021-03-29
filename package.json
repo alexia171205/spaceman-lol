@@ -9,7 +9,10 @@
   "private": true,
   "scripts": {
     "test": "jest --forceExit",
-    "prettier:sol": "prettier --write 'contracts/**/*.sol'"
+    "prettier:sol": "prettier --write 'contracts/**/*.sol'",
+    "postinstall": "husky install",
+    "lint": "eslint . --ext js",
+    "prettier:js": "prettier --write **/*.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.0.1",
