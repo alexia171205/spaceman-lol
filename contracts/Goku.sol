@@ -77,7 +77,7 @@ contract Goku is Ownable, GokuMetaData {
 
 	/**
 	 *@dev Calculates a fee final amount based on a ratio.
-	 *@important This funciton only works with values based on token supply and NOT reflection supply.
+	 *important This funciton only works with values based on token supply and NOT reflection supply.
 	 */
 	function _calculateFee(uint256 amount, uint8 fee)
 		private
@@ -89,7 +89,7 @@ contract Goku is Ownable, GokuMetaData {
 
 	/**
 	 *@dev Returns the final amount for the tax.
-	 *@important This funciton only works with values based on token supply and NOT reflection supply.
+	 *important This funciton only works with values based on token supply and NOT reflection supply.
 	 */
 	function _calculateTaxFee(uint256 amount) private view returns (uint256) {
 		return _calculateFee(amount, taxFee);
@@ -120,7 +120,7 @@ contract Goku is Ownable, GokuMetaData {
 
 	/**
 	 *@dev Returns the final tax amount and the amount after the tax has been applied.
-	 *@important This funciton only works with values based on token supply and NOT reflection supply.
+	 *important This funciton only works with values based on token supply and NOT reflection supply.
 	 */
 	function _calculateTax(uint256 amount)
 		private
