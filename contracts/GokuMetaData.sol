@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/IERC20MetaData.sol";
 
-abstract contract TokeMetaData is IERC20Metadata {
+abstract contract GokuMetaData is IERC20Metadata {
 	/**
 	 *@dev The name of the token managed by the this smart contract.
 	 */

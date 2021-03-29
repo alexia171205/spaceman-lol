@@ -10,7 +10,7 @@ const {
 const { ZERO_ADDRESS } = constants;
 const [owner, other] = accounts;
 
-const TokenContract = contract.fromArtifact('Token');
+const TokenContract = contract.fromArtifact('Goku');
 
 const makeSut = () => TokenContract.new({ from: owner });
 

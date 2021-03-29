@@ -7,34 +7,55 @@ import "./interfaces/IPancackeSwapRouter.sol";
 import "./lib/Context.sol";
 import "./lib/Ownable.sol";
 import "./lib/Address.sol";
-import "./TokenMetaData.sol";
+import "./GokuMetaData.sol";
 
-contract Token is Ownable, TokeMetaData {
+contract Goku is Ownable, GokuMetaData {
 	/**
 	 *@dev Adds the Address library utility methods to the type {address}.
 	 */
 	using Address for address;
 
+	/**
+	 *@dev the maximum uint256 value in solidity, which is used to convert the total supply of tokens to reflections for the reward mechanism.
+	 */
 	uint256 private constant MAX_INT_VALUE = type(uint256).max;
+
 	uint256 private _tokenSupply = 1000000000 * 10**6 * 10**9;
+
+	/**
+	 *@dev Convert the total supply to reflections with perfect rouding using the maximum uint256 as the numerator.
+	 */
 	uint256 private _reflectionSupply = (MAX_INT_VALUE -
 		(MAX_INT_VALUE % _tokenSupply));
+
+	/**
+	 *@dev The total amount of fees paid by the users.
+	 */
 	uint256 private _totalTokenFees;
 
+	/**
+	 *@dev The transaction fee users will incur upon selling the token. 5 percent of the principal.
+	 */
 	uint8 public taxFee = 5;
 
 	/**
-	 *@dev The wallet which holds the account balance after taxes have been applied.
+	 *@dev The wallet which holds the account balance in reflections.
 	 */
 	mapping(address => uint256) private _reflectionBalance;
 
+	/**
+	 *@dev The address of this contract.
+	 */
 	address private _contractAddress;
 
 	constructor() {
+		/**
+		 *@dev Stores the address of the contract upon it's creation.
+		 */
 		_contractAddress = address(this);
 
 		/**
-		 *@dev Gives all the reflection to the owner of the contract
+		 *@dev Gives all the reflection to the deplyer (the first owner) of the contract upon creation.
 		 */
 		_reflectionBalance[_msgSender()] = _reflectionSupply;
 	}
@@ -48,7 +69,7 @@ contract Token is Ownable, TokeMetaData {
 	}
 
 	/**
-	 *@dev Returns the rate that converts reflection to tokens with inflation.
+	 *@dev Returns the rate betweenthe total reflections and the total tokens.
 	 */
 	function _getRate() private view returns (uint256) {
 		return _reflectionSupply / _tokenSupply;
@@ -56,6 +77,7 @@ contract Token is Ownable, TokeMetaData {
 
 	/**
 	 *@dev Calculates a fee final amount based on a ratio.
+	 *@important This funciton only works with values based on token supply and NOT reflection supply.
 	 */
 	function _calculateFee(uint256 amount, uint8 fee)
 		private
@@ -67,6 +89,7 @@ contract Token is Ownable, TokeMetaData {
 
 	/**
 	 *@dev Returns the final amount for the tax.
+	 *@important This funciton only works with values based on token supply and NOT reflection supply.
 	 */
 	function _calculateTaxFee(uint256 amount) private view returns (uint256) {
 		return _calculateFee(amount, taxFee);
@@ -87,13 +110,17 @@ contract Token is Ownable, TokeMetaData {
 		return reflectionAmount / _getRate();
 	}
 
+	/**
+	 *@dev Updates the value of the total fees paid and reduces the reflection supply to reward all holders.
+	 */
 	function _reflectFee(uint256 tokenFee) private {
 		_reflectionSupply -= _reflectionFromToken(tokenFee);
 		_totalTokenFees += tokenFee;
 	}
 
 	/**
-	 *@dev Returns the final tax amount and the amount after the tax has been applied. It works with reflection and token nomination.
+	 *@dev Returns the final tax amount and the amount after the tax has been applied.
+	 *@important This funciton only works with values based on token supply and NOT reflection supply.
 	 */
 	function _calculateTax(uint256 amount)
 		private
@@ -121,7 +148,7 @@ contract Token is Ownable, TokeMetaData {
 	}
 
 	/**
-	 *@dev returns the total supply of the token.
+	 *@dev returns the total supply of tokens.
 	 */
 	function totalSupply() external view override returns (uint256) {
 		return _tokenSupply;
@@ -134,6 +161,9 @@ contract Token is Ownable, TokeMetaData {
 		taxFee = fee;
 	}
 
+	/**
+	 *@dev returns the total tokens a user holds. It first finds the reflections and converts to tokens to reflect the rewards the user has accrued over time.
+	 */
 	function balanceOf(address account)
 		external
 		view
@@ -144,7 +174,7 @@ contract Token is Ownable, TokeMetaData {
 	}
 
 	/**
-	 *@dev to recieve ETH from pancackeSwapv2Router when swaping
+	 *@dev This is used to recieve ETH from pancackeSwapv2Router when swaping.
 	 */
 	receive() external payable {}
 
