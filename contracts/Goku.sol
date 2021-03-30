@@ -48,6 +48,11 @@ contract Goku is Ownable, GokuMetaData {
 	 */
 	address private _contractAddress;
 
+	/**
+	 *@dev Contains the allowances a parent account has provided to children accounts in reflections;
+	 */
+	mapping(address => mapping(address => uint256)) private _allowances;
+
 	constructor() {
 		/**
 		 *@dev Stores the address of the contract upon it's creation.
@@ -181,7 +186,7 @@ contract Goku is Ownable, GokuMetaData {
 	/**
 	 *@dev Allows a user to transfer his reflections to another user. It taxes the sender by the tax fee while inflating the all tokens value.
 	 */
-	function _transfer(
+	function _transferToken(
 		address sender,
 		address recipient,
 		uint256 amount
@@ -201,6 +206,32 @@ contract Goku is Ownable, GokuMetaData {
 		emit Transfer(sender, recipient, afterTaxAmount);
 	}
 
+	function _transfer(
+		address sender,
+		address recipient,
+		uint256 amount
+	) private {
+		_transferToken(sender, recipient, amount);
+	}
+
+	function _approve(
+		address owner,
+		address beneficiary,
+		uint256 amount
+	) private {
+		require(
+			beneficiary != address(0),
+			"The burn address is not allowed to make this operation"
+		);
+		require(
+			owner != address(0),
+			"The burn address is not allowed to make this operation"
+		);
+
+		_allowances[owner][beneficiary] = amount;
+		emit Approval(owner, beneficiary, amount);
+	}
+
 	function transfer(address recipient, uint256 amount)
 		public
 		override
@@ -210,28 +241,71 @@ contract Goku is Ownable, GokuMetaData {
 		return true;
 	}
 
-	function approve(address spender, uint256 amount)
+	function approve(address beneficiary, uint256 amount)
 		public
 		override
 		returns (bool)
 	{
+		_approve(_msgSender(), beneficiary, amount);
 		return true;
 	}
 
+	/**
+	 *@dev It allows an account to transfer it's allowance to any other account;
+	 */
 	function transferFrom(
-		address sender,
-		address recipient,
+		address provider,
+		address beneficiary,
 		uint256 amount
 	) public override returns (bool) {
+		_transfer(provider, beneficiary, amount);
+		_approve(
+			provider,
+			_msgSender(),
+			_allowances[provider][_msgSender()] - amount
+		);
 		return true;
 	}
 
-	function allowance(address owner, address spender)
+	/**
+	 *@dev Shows the allowance of a beneficiary in tokens.
+	 */
+	function allowance(address owner, address beneficiary)
 		public
 		view
 		override
 		returns (uint256)
 	{
-		return 0;
+		return _allowances[owner][beneficiary];
+	}
+
+	/**
+	 *@dev Increases the allowance of a beneficiary
+	 */
+	function increaseAllowance(address beneficiary, uint256 amount)
+		external
+		returns (bool)
+	{
+		_approve(
+			_msgSender(),
+			beneficiary,
+			_allowances[_msgSender()][beneficiary] + amount
+		);
+		return true;
+	}
+
+	/**
+	 *@dev Decreases the allowance of a beneficiary
+	 */
+	function decreaseAllowance(address beneficiary, uint256 amount)
+		external
+		returns (bool)
+	{
+		_approve(
+			_msgSender(),
+			beneficiary,
+			_allowances[_msgSender()][beneficiary] - amount
+		);
+		return true;
 	}
 }
