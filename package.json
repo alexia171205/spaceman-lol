@@ -21,6 +21,7 @@
     "@openzeppelin/test-environment": "^0.1.9",
     "@openzeppelin/test-helpers": "^0.5.10",
     "@types/jest": "^26.0.22",
+    "dotenv": "^8.2.0",
     "eslint": "^7.2.0",
     "eslint-plugin-unicorn": "^29.0.0",
     "husky": "^6.0.0",
