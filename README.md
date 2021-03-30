@@ -12,16 +12,12 @@
 
 ## :wrench: Features
 
-<p>
 Goku Finance is a deflationary ERC20 in the [Binance Smart Chain](https://www.binance.org/en/smartChain). It offers the following functionality.
 
 - It taxes the sender of each transaction by 10%.
   - 5% is used to reward all holders
   - 5% is used to add liquidity to the Pancake Swap Liquidity Pool
 - It has a fixed supply of 1 000 000 000 000 000 with 9 decimal houses.
-</p>
-
-<br>
 
 ## :rocket: Technologies
 
