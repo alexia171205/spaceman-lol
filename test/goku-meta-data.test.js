@@ -4,9 +4,9 @@ const { totalSupplyString } = require('../test-helpers');
 
 const [owner] = accounts;
 
-const TokenContract = contract.fromArtifact('Goku');
+const Contract = contract.fromArtifact(process.env.CONTRACT_NAME);
 
-const makeSut = () => TokenContract.new({ from: owner });
+const makeSut = () => Contract.new({ from: owner });
 
 describe('Goku Meta Data', () => {
   it('exposes proper meta data for the token', async () => {
