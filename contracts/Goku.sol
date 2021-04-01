@@ -3,13 +3,20 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IERC20.sol";
-import "./interfaces/IPancackeSwapRouter.sol";
+import "./interfaces/IUniswapV2Router02.sol";
+import "./interfaces/IUniswapV2Factory.sol";
 import "./lib/Context.sol";
 import "./lib/Ownable.sol";
 import "./lib/Address.sol";
 import "./GokuMetaData.sol";
 
 contract Goku is Ownable, GokuMetaData {
+	event SwapAndLiquefy(
+		uint256 tokensSwapped,
+		uint256 ethReceived,
+		uint256 tokensIntoLiqudity
+	);
+
 	/**
 	 *@dev Adds the Address library utility methods to the type {address}.
 	 */
@@ -21,7 +28,6 @@ contract Goku is Ownable, GokuMetaData {
 	uint256 private constant MAX_INT_VALUE = type(uint256).max;
 
 	uint256 private _tokenSupply = 1000000000 * 10**6 * 10**9;
-
 	/**
 	 *@dev Convert the total supply to reflections with perfect rouding using the maximum uint256 as the numerator.
 	 */
@@ -39,6 +45,11 @@ contract Goku is Ownable, GokuMetaData {
 	uint8 public taxFee = 5;
 
 	/**
+	 *@dev The liquidity fee users will incur upon selling tokens. 5 percent of the principal.
+	 */
+	uint8 public liquidityFee = 5;
+
+	/**
 	 *@dev The wallet which holds the account balance in reflections.
 	 */
 	mapping(address => uint256) private _reflectionBalance;
@@ -53,7 +64,30 @@ contract Goku is Ownable, GokuMetaData {
 	 */
 	mapping(address => mapping(address => uint256)) private _allowances;
 
-	constructor() {
+	/**
+	 *@dev A maximum amount that can be transfered at once. Which is equivalent to 1% of the total supply.
+	 */
+	uint256 public maxTxAmount = 10000000 * 10**6 * 10**9;
+
+	/**
+	 *@dev Number of tokens needed to provide liquidity to the pool
+	 */
+	uint256 private _numberTokensSellToAddToLiquidity = 500000 * 10**6 * 10**9;
+
+	/**
+	 *@dev State indicating that we are in a liquefaction process to prevent stacking liquefaction events.
+	 */
+	bool swapAndLiquefactionInProgress;
+
+	/**
+	 *@dev Variable to allow the owner to enable or disable liquefaction  events
+	 */
+	bool public isSwapAndLiquefactionEnabled = true;
+
+	IUniswapV2Router02 public immutable uniswapV2Router;
+	address public immutable uniswapV2WETHPair;
+
+	constructor(address _factory) {
 		/**
 		 *@dev Stores the address of the contract upon it's creation.
 		 */
@@ -63,6 +97,25 @@ contract Goku is Ownable, GokuMetaData {
 		 *@dev Gives all the reflection to the deplyer (the first owner) of the contract upon creation.
 		 */
 		_reflectionBalance[_msgSender()] = _reflectionSupply;
+
+		// Tells solidity this address follows the IUniswapV2Router interface
+		IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(_factory);
+
+		// Creates a pair between our token and WETH and saves the address in a state variable
+		uniswapV2WETHPair = IUniswapV2Factory(_uniswapV2Router.factory())
+			.createPair(address(this), _uniswapV2Router.WETH());
+
+		// Saves the UniswapV2Router in a state variable
+		uniswapV2Router = _uniswapV2Router;
+	}
+
+	/**
+	 *@dev Tell the contract we are swapping
+	 */
+	modifier lockTheSwap {
+		swapAndLiquefactionInProgress = true;
+		_;
+		swapAndLiquefactionInProgress = false;
 	}
 
 	/**
@@ -94,10 +147,22 @@ contract Goku is Ownable, GokuMetaData {
 
 	/**
 	 *@dev Returns the final amount for the tax.
-	 *important This funciton only works with values based on token supply and NOT reflection supply.
+	 *important This function only works with values based on token supply and NOT reflection supply.
 	 */
 	function _calculateTaxFee(uint256 amount) private view returns (uint256) {
 		return _calculateFee(amount, taxFee);
+	}
+
+	/**
+	 *@dev Returns the final amount for the liquidity tax.
+	 *important This function only works with values based on token supply and NOT reflection supply.
+	 */
+	function _calculateLiquidityFee(uint256 amount)
+		private
+		view
+		returns (uint256)
+	{
+		return _calculateFee(amount, liquidityFee);
 	}
 
 	/**
@@ -121,20 +186,6 @@ contract Goku is Ownable, GokuMetaData {
 	function _reflectFee(uint256 tokenFee) private {
 		_reflectionSupply -= _reflectionFromToken(tokenFee);
 		_totalTokenFees += tokenFee;
-	}
-
-	/**
-	 *@dev Returns the final tax amount and the amount after the tax has been applied.
-	 *important This funciton only works with values based on token supply and NOT reflection supply.
-	 */
-	function _calculateTax(uint256 amount)
-		private
-		view
-		returns (uint256, uint256)
-	{
-		uint256 tax = _calculateTaxFee(amount);
-		uint256 finalAmount = amount - tax;
-		return (tax, finalAmount);
 	}
 
 	/**
@@ -167,14 +218,16 @@ contract Goku is Ownable, GokuMetaData {
 	}
 
 	/**
+	 *@dev Updates the liquidity fee. Only the owner can use it.
+	 */
+	function setLiquidityFeePercent(uint8 fee) external onlyOwner() {
+		liquidityFee = fee;
+	}
+
+	/**
 	 *@dev returns the total tokens a user holds. It first finds the reflections and converts to tokens to reflect the rewards the user has accrued over time.
 	 */
-	function balanceOf(address account)
-		external
-		view
-		override
-		returns (uint256)
-	{
+	function balanceOf(address account) public view override returns (uint256) {
 		return _tokenFromReflection(_reflectionBalance[account]);
 	}
 
@@ -184,6 +237,15 @@ contract Goku is Ownable, GokuMetaData {
 	receive() external payable {}
 
 	/**
+	 *@dev Stores the liquidity fee in the contract's address
+	 */
+	function _takeLiquidity(uint256 amount) private {
+		_reflectionBalance[address(this)] =
+			_reflectionBalance[address(this)] +
+			(amount * _getRate());
+	}
+
+	/**
 	 *@dev Allows a user to transfer his reflections to another user. It taxes the sender by the tax fee while inflating the all tokens value.
 	 */
 	function _transferToken(
@@ -191,29 +253,132 @@ contract Goku is Ownable, GokuMetaData {
 		address recipient,
 		uint256 amount
 	) private {
+		// Takes money from sender
 		_reflectionBalance[sender] =
 			_reflectionBalance[sender] -
 			_reflectionFromToken(amount);
 
-		(uint256 tax, uint256 afterTaxAmount) = _calculateTax(amount);
+		// Calculates transaction fee
+		uint256 tFee = _calculateTaxFee(amount);
 
+		// Calculates the liquidity fee
+		uint256 lFee = _calculateLiquidityFee(amount);
+
+		// Final amount for the recipient
+		uint256 finalAmount = amount - tFee - lFee;
+
+		// Sends the final amount to the recipient
 		_reflectionBalance[recipient] =
 			_reflectionBalance[recipient] +
-			_reflectionFromToken(afterTaxAmount);
+			_reflectionFromToken(finalAmount);
 
-		_reflectFee(tax);
+		// Stores the liquidityFee in the contract
+		_takeLiquidity(_reflectionFromToken(liquidityFee));
 
-		emit Transfer(sender, recipient, afterTaxAmount);
+		// Rewards all users with the transaction fee
+		_reflectFee(taxFee);
+
+		emit Transfer(sender, recipient, finalAmount);
 	}
 
+	/**
+	 *@dev buys ETH with tokens stored in this contract
+	 */
+	function _swapTokensForEth(uint256 tokenAmount) private {
+		// generate the uniswap pair path of token -> weth
+		address[] memory path = new address[](2);
+		path[0] = address(this);
+		path[1] = uniswapV2Router.WETH();
+
+		_approve(address(this), address(uniswapV2Router), tokenAmount);
+
+		// make the swap
+		uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+			tokenAmount,
+			0, // accept any amount of ETH
+			path,
+			address(this),
+			block.timestamp
+		);
+	}
+
+	/**
+	 *@dev Adds equal amount of eth and tokens to the ETH liquidity pool
+	 */
+	function _addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
+		// approve token transfer to cover all possible scenarios
+		_approve(address(this), address(uniswapV2Router), tokenAmount);
+
+		// add the liquidity
+		uniswapV2Router.addLiquidityETH{ value: ethAmount }(
+			address(this),
+			tokenAmount,
+			0, // slippage is unavoidable
+			0, // slippage is unavoidable
+			owner(),
+			block.timestamp
+		);
+	}
+
+	function _swapAndLiquefy() private lockTheSwap {
+		// split the contract token balance into halves
+		uint256 half = _numberTokensSellToAddToLiquidity / 2;
+		uint256 otherHalf = _numberTokensSellToAddToLiquidity - half;
+
+		uint256 initialETHContractBalance = address(this).balance;
+
+		// Buys ETH at current token price
+		_swapTokensForEth(half);
+
+		// This is to make sure we are only using ETH derived from the liquidity fee
+		uint256 ethBought = address(this).balance - initialETHContractBalance;
+
+		// Add liquidity to the pool
+		_addLiquidity(otherHalf, ethBought);
+
+		emit SwapAndLiquefy(half, ethBought, otherHalf);
+	}
+
+	/**
+	 *@dev This function first adds liquidity to the pool, then transfers tokens between accounts
+	 */
 	function _transfer(
 		address sender,
 		address recipient,
 		uint256 amount
 	) private {
+		require(
+			sender != address(0),
+			"ERC20: Sender cannot be the zero address"
+		);
+		require(
+			recipient != address(0),
+			"ERC20: Recipient cannot be the zero address"
+		);
+		require(amount > 0, "Transfer amount must be greater than zero");
+		if (sender != owner() && recipient != owner())
+			require(
+				amount <= maxTxAmount,
+				"Transfer amount exceeds the maxTxAmount."
+			);
+
+		// Condition 1: Make sure the contract has the enough tokens to liquefy
+		// Condition 2: We are not in a liquefication event
+		// Condition 3: Liquification is enabled
+		// Condition 4: It is not the uniswapPair that is sending tokens
+		if (
+			balanceOf(address(this)) >= _numberTokensSellToAddToLiquidity &&
+			!swapAndLiquefactionInProgress &&
+			isSwapAndLiquefactionEnabled &&
+			sender != uniswapV2WETHPair
+		) _swapAndLiquefy();
+
 		_transferToken(sender, recipient, amount);
 	}
 
+	/**
+	 *@dev Gives allowance to an account
+	 */
 	function _approve(
 		address owner,
 		address beneficiary,
