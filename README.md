@@ -1,6 +1,6 @@
 <h1 align="center">
     <br>
-    Goku Finance
+    Spaceman LOL
     <br>
 </h1>
 <p align="center">
