@@ -1,26 +1,24 @@
 {
-  "name": "goku",
+  "name": "spaceman-lol",
   "version": "1.0.0",
   "description": "a deflationary cryptocurrency in BSC",
-  "main": "index.js",
   "repository": "https://github.com/syllena/defi-token",
   "author": "jose cerqueira",
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "jest --forceExit",
+    "test": "jest --forceExit --passWithNoTests",
     "prettier:sol": "prettier --write 'contracts/**/*.sol'",
     "prepare": "husky install",
     "lint": "eslint . --ext js",
     "prettier:js": "prettier --write **/*.js",
-    "build": "npx truffle compile"
+    "build": "npx truffle compile",
+    "migrate:testnet": "truffle deploy --network testnet"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.0.1",
     "@commitlint/config-conventional": "^12.0.1",
-    "@openzeppelin/test-environment": "^0.1.9",
-    "@openzeppelin/test-helpers": "^0.5.10",
-    "@types/jest": "^26.0.22",
+    "@truffle/hdwallet-provider": "^1.2.6",
     "dotenv": "^8.2.0",
     "eslint": "^7.2.0",
     "eslint-plugin-unicorn": "^29.0.0",
