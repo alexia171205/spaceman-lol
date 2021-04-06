@@ -12,7 +12,7 @@
 
 ## :wrench: Features
 
-Goku Finance is a deflationary ERC20 in the [Binance Smart Chain](https://www.binance.org/en/smartChain). It offers the following functionality.
+Spaceman LOL  is a deflationary ERC20 in the [Binance Smart Chain](https://www.binance.org/en/smartChain). It offers the following functionality.
 
 - It taxes the sender of each transaction by 10%.
   - 5% is used to reward all holders
