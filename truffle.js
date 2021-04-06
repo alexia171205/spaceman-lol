@@ -1,5 +1,5 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider');
-const { MNEMONIC, BSC_SCAN_API_KEY } = require('./env.json');
+const { MNEMONIC, BSC_SCAN_API_KEY, BSC_TESTNET_URL, BSC_URL } = require('./env.json');
 
 module.exports = {
   api_keys: {
@@ -15,9 +15,21 @@ module.exports = {
       provider: () =>
         new HDWalletProvider({
           mnemonic: MNEMONIC,
-          providerOrUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+          providerOrUrl: BSC_TESTNET_URL,
         }),
       network_id: 97,
+      confirmations: 10,
+      timeoutBlocks: 200,
+      skipDryRun: true,
+      production: true,
+    },
+    bsc: {
+      provider: () =>
+        new HDWalletProvider({
+          mnemonic: MNEMONIC,
+          providerOrUrl: BSC_URL,
+        }),
+      network_id: 56,
       confirmations: 10,
       timeoutBlocks: 200,
       skipDryRun: true,

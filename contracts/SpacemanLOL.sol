@@ -108,11 +108,6 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 	 */
 	bool public isSwapAndLiquifyingEnabled = false;
 
-	/**
-	 *@dev Variable to control universal trading for the token
-	 */
-	bool public isTradingEnabled = false;
-
 	IUniswapV2Router02 public immutable uniswapV2Router;
 	address public immutable uniswapV2WETHPair;
 
@@ -653,11 +648,6 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 				"Transfer amount exceeds the maxTxAmount."
 			);
 
-		// If trading is disabled only the owner can transfer tokens.
-		if (sender != owner() && !isTradingEnabled) {
-			require(isTradingEnabled, "Trading is currently disabled!");
-		}
-
 		// Condition 1: Make sure the contract has the enough tokens to liquefy
 		// Condition 2: We are not in a liquefication event
 		// Condition 3: Liquification is enabled
@@ -714,10 +704,6 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 	{
 		_approve(_msgSender(), beneficiary, amount);
 		return true;
-	}
-
-	function enableTrading() external onlyOwner() {
-		isTradingEnabled = true;
 	}
 
 	/**

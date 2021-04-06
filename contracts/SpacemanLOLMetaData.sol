@@ -8,7 +8,7 @@ abstract contract SpacemanLOLMetaData is IERC20Metadata {
 	/**
 	 *@dev The name of the token managed by the this smart contract.
 	 */
-	string private _name = "SPACEMAN LOL";
+	string private _name = "TEST SPACEMAN LOL";
 
 	/**
 	 *@dev The symbol of the token managed by the this smart contract.
