@@ -8,14 +8,14 @@ const Contract = contract.fromArtifact(process.env.CONTRACT_NAME);
 
 const makeSut = () => Contract.new({ from: owner });
 
-describe('Goku Meta Data', () => {
+describe('Spaceman LOL Meta Data', () => {
   it('exposes proper meta data for the token', async () => {
     const sut = await makeSut();
 
     const [name, symbol, decimals] = await Promise.all([sut.name(), sut.symbol(), sut.decimals()]);
 
-    expect(name).toBe('Goku');
-    expect(symbol).toBe('GOKU');
+    expect(name).toBe('SPACEMAN LOL');
+    expect(symbol).toBe('SML');
     expect(+decimals.toString()).toBe(9);
   });
 

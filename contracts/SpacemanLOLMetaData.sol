@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.0;
+pragma solidity 0.8.3;
 
 import "./interfaces/IERC20MetaData.sol";
 
-abstract contract GokuMetaData is IERC20Metadata {
+abstract contract SpacemanLOLMetaData is IERC20Metadata {
 	/**
 	 *@dev The name of the token managed by the this smart contract.
 	 */
-	string private _name = "Goku";
+	string private _name = "SPACEMAN LOL";
 
 	/**
 	 *@dev The symbol of the token managed by the this smart contract.
 	 */
-	string private _symbol = "GOKU";
+	string private _symbol = "SML";
 
 	/**
 	 *@dev The decimals of the token managed by the this smart contract.

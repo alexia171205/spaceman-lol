@@ -10,7 +10,7 @@ const Contract = contract.fromArtifact(process.env.CONTRACT_NAME);
 
 const makeSut = () => Contract.new({ from: owner });
 
-describe('Goku ERC20 interface', () => {
+describe('Spaceman LOL ERC20 interface', () => {
   it('assigns all tokens to the owner at deployment', async () => {
     const sut = await makeSut();
 
