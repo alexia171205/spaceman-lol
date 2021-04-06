@@ -7,7 +7,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "jest --forceExit",
+    "test": "jest --forceExit --passWithNoTests",
     "prettier:sol": "prettier --write 'contracts/**/*.sol'",
     "prepare": "husky install",
     "lint": "eslint . --ext js",
