@@ -5,4 +5,6 @@ declare module '@openzeppelin/test-helpers' {
     eventArgs?: Record<string, unknown>
   ): void;
   export function expectRevert(promise: Promise<unknown>, message: string): void;
+
+  export const ZERO_ADDRESS: string;
 }
