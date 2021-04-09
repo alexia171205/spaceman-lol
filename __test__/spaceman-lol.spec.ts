@@ -21,7 +21,7 @@ describe('Spaceman LOL', () => {
 
       const name = await sut.name();
 
-      expect(name).toBe('TEST SPACEMAN');
+      expect(name).toBe('SPACEMAN LOL');
     });
     it('has a symbol', async () => {
       const { sut } = await makeSut();
@@ -166,7 +166,7 @@ describe('Spaceman LOL', () => {
       expect(uniswapV2Router).toBe(mockUniswapRouter02.address);
     });
 
-    it('allows the only the owner to exclude an account from rewards, verify that it is excluded and then include it back to get rewards', async () => {
+    it('allows only the owner to exclude an account from rewards, verify that it is excluded and then include it back to get rewards', async () => {
       const { sut } = await makeSut();
 
       const isRecipientExcludedFromRewards01 = await sut.isExcludedFromRewards(recipient);
@@ -556,7 +556,7 @@ describe('Spaceman LOL', () => {
       // If the same condition holds true for the recipient balance after the owner switch him back to receiving rewards it means the transfer was correctly done
       expect(otherBalance.toString()).not.toBe('0');
     });
-    it.only('correctly transfer between two excluded accounts', async () => {
+    it('correctly transfer between two excluded accounts', async () => {
       const { sut } = await makeSut();
 
       await sut.excludeFromReward(recipient, { from: owner });
