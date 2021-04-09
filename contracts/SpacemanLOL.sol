@@ -89,7 +89,7 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 	mapping(address => mapping(address => uint256)) private _allowances;
 
 	/**
-	 *@dev A maximum amount that can be transfered at once. Which is equivalent to 1% of the total supply.
+	 *@dev A maximum amount that can be transfered at once. Which is equivalent to 0.5% of the total supply.
 	 */
 	uint256 public maxTxAmount = 5000000 * 10**6 * 10**9;
 
@@ -129,6 +129,8 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 
 		_isExcludedFromFees[owner()] = true;
 		_isExcludedFromFees[address(this)] = true;
+
+		emit Transfer(address(0), _msgSender(), _reflectionSupply);
 	}
 
 	/**
@@ -151,11 +153,11 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 		uint256 totalReflection = _reflectionSupply;
 		uint256 totalTokens = _tokenSupply;
 		// Iterates to all excluded accounts
-		for (uint256 i; i < _excluded.length; i++) {
+		for (uint256 i = 0; i < _excluded.length; i++) {
 			if (
 				// Makes sure that no single account has more tokens than the total possible amount of tokens. And does the same for reflections.
-				_reflectionBalance[_excluded[i]] > _reflectionSupply ||
-				_tokenBalance[_excluded[i]] > _tokenSupply
+				_reflectionBalance[_excluded[i]] > totalReflection ||
+				_tokenBalance[_excluded[i]] > totalTokens
 			) return (_reflectionSupply, _tokenSupply);
 			// Remove the excluded accounts reflections when calculating the current supply.
 			totalReflection =
@@ -165,9 +167,9 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 			totalTokens = totalTokens - _tokenBalance[_excluded[i]];
 		}
 
+		// Makes sure the least amount of tokens possible is 1 token.
 		return
-			// Makes sure token supply does not overflow
-			_reflectionSupply / _tokenSupply > totalReflection
+			(_reflectionSupply / _tokenSupply) > totalReflection
 				? (_reflectionSupply, _tokenSupply)
 				: (totalReflection, totalTokens);
 	}
@@ -253,7 +255,7 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 			);
 		}
 
-		_isExcludedFromRewards[account];
+		_isExcludedFromRewards[account] = true;
 		_excluded.push(account);
 	}
 
@@ -278,12 +280,12 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 		}
 	}
 
-	function excludeFromFree(address account) external onlyOwner() {
+	function excludeFromFees(address account) external onlyOwner() {
 		_isExcludedFromFees[account] = true;
 	}
 
 	function includeInFees(address account) external onlyOwner() {
-		_isExcludedFromRewards[account] = false;
+		_isExcludedFromFees[account] = false;
 	}
 
 	/**
@@ -407,7 +409,7 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 	}
 
 	/**
-	 *@dev This is used to recieve ETH from pancackeSwapv2Router when swaping.
+	 *@dev This is used to recieve ETH from uniswapv2router when swaping.
 	 */
 	receive() external payable {}
 
@@ -429,17 +431,21 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 		// Calculates the liquidity fee
 		uint256 lFee = _calculateLiquidityFee(amount);
 
-		uint256 finalAmount = amount - tTax - lFee;
+		uint256 tokenFinalAmount = amount - tTax - lFee;
+		uint256 reflectionFinalAmount =
+			_reflectionFromToken(amount) -
+				_reflectionFromToken(tTax) -
+				_reflectionFromToken(lFee);
 
 		// Since the recipient is not excluded. We only need to update its reflection balance.
 		_reflectionBalance[recipient] =
 			_reflectionBalance[recipient] +
-			_reflectionFromToken(finalAmount);
+			reflectionFinalAmount;
 
 		_takeLiquidity(lFee);
 		_reflectFee(tTax);
 
-		emit Transfer(sender, recipient, finalAmount);
+		emit Transfer(sender, recipient, tokenFinalAmount);
 	}
 
 	// Transfer between Not Exluded -> Excluded
@@ -459,18 +465,22 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 		// Calculates the liquidity fee
 		uint256 lFee = _calculateLiquidityFee(amount);
 
-		uint256 finalAmount = amount - tTax - lFee;
+		uint256 tokenFinalAmount = amount - tTax - lFee;
+		uint256 reflectionFinalAmount =
+			_reflectionFromToken(amount) -
+				_reflectionFromToken(tTax) -
+				_reflectionFromToken(lFee);
 
 		// Since the recipient is excluded. We need to update both his/her reflections and tokens.
-		_tokenBalance[recipient] = _tokenBalance[recipient] + finalAmount;
+		_tokenBalance[recipient] = _tokenBalance[recipient] + tokenFinalAmount;
 		_reflectionBalance[recipient] =
 			_reflectionBalance[recipient] +
-			_reflectionFromToken(finalAmount);
+			reflectionFinalAmount;
 
 		_takeLiquidity(lFee);
 		_reflectFee(tTax);
 
-		emit Transfer(sender, recipient, finalAmount);
+		emit Transfer(sender, recipient, tokenFinalAmount);
 	}
 
 	// Transfer between Not Exluded -> Not Excluded
@@ -490,17 +500,21 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 		// Calculates the liquidity fee
 		uint256 lFee = _calculateLiquidityFee(amount);
 
-		uint256 finalAmount = amount - tTax - lFee;
+		uint256 tokenFinalAmount = amount - tTax - lFee;
+		uint256 reflectionFinalAmount =
+			_reflectionFromToken(amount) -
+				_reflectionFromToken(tTax) -
+				_reflectionFromToken(lFee);
 
 		// Since the recipient is also not excluded. We only need to update his reflections.
 		_reflectionBalance[recipient] =
 			_reflectionBalance[recipient] +
-			_reflectionFromToken(finalAmount);
+			reflectionFinalAmount;
 
 		_takeLiquidity(lFee);
 		_reflectFee(tTax);
 
-		emit Transfer(sender, recipient, finalAmount);
+		emit Transfer(sender, recipient, tokenFinalAmount);
 	}
 
 	// Transfer between Exluded -> Excluded
@@ -509,7 +523,7 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 		address recipient,
 		uint256 amount
 	) private {
-		// Because this account comes from a excluded account. We only need to reduce it's reflections and tokens.
+		// Because this account comes from a excluded account to an excluded. We only to reduce it's reflections and tokens.
 		_tokenBalance[sender] = _tokenBalance[sender] - amount;
 		_reflectionBalance[sender] =
 			_reflectionBalance[sender] -
@@ -521,18 +535,22 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 		// Calculates the liquidity fee
 		uint256 lFee = _calculateLiquidityFee(amount);
 
-		uint256 finalAmount = amount - tTax - lFee;
+		uint256 tokenFinalAmount = amount - tTax - lFee;
+		uint256 reflectionFinalAmount =
+			_reflectionFromToken(amount) -
+				_reflectionFromToken(tTax) -
+				_reflectionFromToken(lFee);
 
 		// Since the recipient is also  excluded. We need to update his reflections and tokens.
-		_tokenBalance[recipient] = _tokenBalance[recipient] + finalAmount;
+		_tokenBalance[recipient] = _tokenBalance[recipient] + tokenFinalAmount;
 		_reflectionBalance[recipient] =
 			_reflectionBalance[recipient] +
-			_reflectionFromToken(finalAmount);
+			reflectionFinalAmount;
 
 		_takeLiquidity(lFee);
 		_reflectFee(tTax);
 
-		emit Transfer(sender, recipient, finalAmount);
+		emit Transfer(sender, recipient, tokenFinalAmount);
 	}
 
 	/**
@@ -555,6 +573,11 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 			!_isExcludedFromRewards[sender] && _isExcludedFromRewards[recipient]
 		) {
 			_transferToExcluded(sender, recipient, amount);
+		} else if (
+			!_isExcludedFromRewards[sender] &&
+			!_isExcludedFromRewards[recipient]
+		) {
+			_transferStandard(sender, recipient, amount);
 		} else if (
 			_isExcludedFromRewards[sender] && _isExcludedFromRewards[recipient]
 		) {
@@ -652,6 +675,7 @@ contract SpacemanLOL is Ownable, SpacemanLOLMetaData {
 		// Condition 2: We are not in a liquefication event
 		// Condition 3: Liquification is enabled
 		// Condition 4: It is not the uniswapPair that is sending tokens
+
 		if (
 			balanceOf(address(this)) >= _numberTokensSellToAddToLiquidity &&
 			!swapAndLiquifyingInProgress &&

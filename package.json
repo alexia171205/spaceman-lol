@@ -13,20 +13,29 @@
     "lint": "eslint . --ext js",
     "prettier:js": "prettier --write **/*.js",
     "build": "npx truffle compile",
-    "migrate:testnet": "truffle deploy --network testnet"
+    "migrate:testnet": "truffle deploy --network testnet",
+    "coverage": "truffle run coverage"
   },
   "devDependencies": {
     "@commitlint/cli": "^12.0.1",
     "@commitlint/config-conventional": "^12.0.1",
+    "@openzeppelin/test-environment": "^0.1.9",
+    "@openzeppelin/test-helpers": "^0.5.10",
     "@truffle/hdwallet-provider": "^1.2.6",
+    "@types/ethereumjs-abi": "^0.6.3",
+    "@types/jest": "^26.0.22",
     "dotenv": "^8.2.0",
     "eslint": "^7.2.0",
     "eslint-plugin-unicorn": "^29.0.0",
+    "ethereumjs-abi": "^0.6.8",
     "husky": "^6.0.0",
     "jest": "^26.6.3",
     "lint-staged": "^10.5.4",
     "prettier": "^2.2.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.6"
+    "prettier-plugin-solidity": "^1.0.0-beta.6",
+    "solidity-coverage": "^0.7.16",
+    "ts-jest": "^26.5.4",
+    "typescript": "^4.2.4"
   },
   "dependencies": {}
 }
