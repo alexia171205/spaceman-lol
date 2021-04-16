@@ -40,7 +40,7 @@ This project uses the husky to enforce code quality. Therefore we recommend sett
 
 ```bash
 # Clone this repository
-$ git clone https://github.com/syllena/defi-token.git choose_a_name
+$ git clone git@github.com:syllena/spaceman-lol.git choose_a_name
 
 # Go into the repository
 $ cd choose_a_name
